@@ -1,0 +1,18 @@
+<h1 class="text-2xl">My Content Goes Here</h1>
+
+<div id="app"></div>
+
+<script>
+const { div } = van.tags
+
+const items = van.state([1,2,3,4,5])
+const App = () => {
+  return div(
+    items.val.map(i => div(i))
+  )
+}
+
+const el = document.getElementById('app')
+
+van.add(el, App())
+</script>
