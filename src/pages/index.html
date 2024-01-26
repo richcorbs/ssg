@@ -1,4 +1,4 @@
-<h1 class="text-2xl">My Content Goes Here</h1>
+<h1 class="text-2xl">Page Heading</h1>
 
 <div id="app"></div>
 
@@ -6,6 +6,7 @@
 const { div } = van.tags
 
 const items = van.state([1,2,3,4,5])
+
 const App = () => {
   return div(
     items.val.map(i => div(i))

@@ -8,19 +8,14 @@ LAYOUT=$(<"$SRC_DIR/layouts/layout.html")
 # Function to process a single file (HTML, Markdown, JS, or CSS)
 process_file() {
     local input_file="$1"
-    
-    # Determine the file extension
     local extension="${input_file##*.}"
-    
-    # Remove the "pages" or "public" top-level directory from the output path
     local output_file="$DIST_DIR/${input_file#$SRC_DIR/}"
     
-    # Exclude "public" directory from the structure in ./dist
+    # Exclude "public" and "pages" directories from the structure in ./dist
     if [[ "$input_file" == "$SRC_DIR/public"* ]]; then
         output_file="$DIST_DIR/${input_file#$SRC_DIR/public/}"
     fi
     
-    # Exclude "pages" directory from the structure in ./dist
     if [[ "$input_file" == "$SRC_DIR/pages"* ]]; then
         output_file="$DIST_DIR/${input_file#$SRC_DIR/pages/}"
     fi
@@ -33,10 +28,9 @@ process_file() {
     # Ensure the output directory exists
     mkdir -p "$(dirname "$output_file")"
     
-    # Read the content of the file
+    # Read the content of the input file
     content=$(<"$input_file")
     
-    # For HTML files, wrap the content in the layout
     if [ "$extension" == "html" ]; then
         # Replace the content placeholder with the actual content
         output_content="${LAYOUT//$CONTENT_PLACEHOLDER/$content}"
