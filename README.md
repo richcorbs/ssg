@@ -2,6 +2,14 @@
 
 This is a simple static site generator built in bash. I built it for my needs which are, well, simple.
 
+## Features
+
+1. VanJS built-in for dynamic content.
+2. Tailwind CSS support via https://curlwind.com.
+3. Single layout file for all your content.
+4. Support for HTML and Markdown content.
+5. Simple. ~100 lines of bash script.
+
 ## Requirements
 
 1. Bash
