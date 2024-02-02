@@ -1,10 +1,12 @@
 #!/bin/bash
 
 SRC_DIR="./src"
+COMPONENTS_DIR="./src/components"
 DIST_DIR="./dist"
 CONTENT_PLACEHOLDER="__CONTENT__"
+COMPONENT_TAG_PATTERN="<([^\/>]+)\/?>"
 LAYOUT=$(<"$SRC_DIR/layouts/layout.html")
-        
+
 # Function to process a single file (HTML, Markdown, JS, or CSS)
 process_file() {
     local input_file="$1"
@@ -32,14 +34,25 @@ process_file() {
     content=$(<"$input_file")
     
     if [ "$extension" == "html" ]; then
+        output_content="$content"
+        echo $output_content
+        while read -r file; do
+            component_name=$(basename "$file" .html)
+            TAG1="<${component_name} />"
+            TAG2="<${component_name}></${component_name}>"
+            component_content="$(<"$file")"
+            output_content="${output_content/$TAG1/$component_content}"
+            output_content="${output_content/$TAG2/$component_content}"
+        done < <(find "$COMPONENTS_DIR" -type f)
+    
         # Replace the content placeholder with the actual content
-        output_content="${LAYOUT//$CONTENT_PLACEHOLDER/$content}"
+        output_content="${LAYOUT/$CONTENT_PLACEHOLDER/$output_content}"
     elif [ "$extension" == "md" ]; then
         # Convert Markdown to HTML using pandoc
         converted_content=$(pandoc "$input_file")
         
         # Replace the content placeholder with the converted Markdown content
-        output_content="${LAYOUT//$CONTENT_PLACEHOLDER/$converted_content}"
+        output_content="${LAYOUT/$CONTENT_PLACEHOLDER/$converted_content}"
     else
         # For JS and CSS files, use the content directly without wrapping
         output_content="$content"
@@ -72,6 +85,8 @@ deploy() {
     # Add your deployment logic here
     # For example, you can use rsync, scp, or any other method to upload to a server
 }
+
+load_components
 
 # Clear the dist folder
 clear_dist

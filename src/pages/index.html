@@ -2,18 +2,22 @@
 
 <div id="app"></div>
 
+<Test />
+
+<Test></Test>
+
 <script>
-const { div } = van.tags
+  const {div} = van.tags
 
-const items = van.state([1,2,3,4,5])
+  const items = van.state([1, 2, 3, 4, 5])
 
-const App = () => {
-  return div(
-    items.val.map(i => div(i))
-  )
-}
+  const App = () => {
+    return div(
+      items.val.map(i => div(i))
+    )
+  }
 
-const el = document.getElementById('app')
+  const el = document.getElementById('app')
 
-van.add(el, App())
+  van.add(el, App())
 </script>

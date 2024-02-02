@@ -7,7 +7,13 @@ DIST_DIR="./dist"
 ./build.sh
 
 # Watch for changes in the source directory and trigger a build
-fswatch -r "$SRC_DIR" |
+fswatch -r "./src" |
+while read -r changed_file; do
+    echo "Detected change in $changed_file. Rebuilding..."
+    ./build.sh
+done &
+
+fswatch -r "./build.sh" |
 while read -r changed_file; do
     echo "Detected change in $changed_file. Rebuilding..."
     ./build.sh
