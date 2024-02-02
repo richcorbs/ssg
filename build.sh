@@ -35,7 +35,7 @@ process_file() {
     
     if [ "$extension" == "html" ]; then
         output_content="$content"
-        echo $output_content
+
         while read -r file; do
             component_name=$(basename "$file" .html)
             TAG1="<${component_name} />"
@@ -45,7 +45,6 @@ process_file() {
             output_content="${output_content/$TAG2/$component_content}"
         done < <(find "$COMPONENTS_DIR" -type f)
     
-        # Replace the content placeholder with the actual content
         output_content="${LAYOUT/$CONTENT_PLACEHOLDER/$output_content}"
     elif [ "$extension" == "md" ]; then
         # Convert Markdown to HTML using pandoc
