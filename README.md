@@ -7,9 +7,10 @@ This is a simple static site generator built in bash. I built it for my needs wh
 1. VanJS built-in for dynamic content.
 2. Tailwind CSS support via https://curlwind.com.
 3. Single layout file for all your content.
-4. Support for HTML and Markdown content.
-5. Hot reload development experience.
-6. Simple. ~100 lines of bash script.
+4. Support for HTML components/fragments.
+5. Support for HTML and Markdown content.
+6. Hot reload development experience.
+7. Simple. ~100 lines of bash script.
 
 ## Requirements
 
@@ -34,5 +35,5 @@ That's it.
 
 ## The Future of SSSG
 
-- I may add support for components/partials but maybe not.
+- DONE. I may add support for dumb HTML components/fragments but maybe not.
 
