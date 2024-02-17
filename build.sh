@@ -12,7 +12,7 @@ process_file() {
     local input_file="$1"
     local extension="${input_file##*.}"
     local output_file="$DIST_DIR/${input_file#$SRC_DIR/}"
-    
+
     # Exclude "public" and "pages" directories from the structure in ./dist
     if [[ "$input_file" == "$SRC_DIR/public"* ]]; then
         output_file="$DIST_DIR/${input_file#$SRC_DIR/public/}"
@@ -33,6 +33,19 @@ process_file() {
     # Read the content of the input file
     content=$(<"$input_file")
     
+    # Check for frontmatter
+    local frontmatter=$(echo "$content" | sed -n '/^---$/,/^---$/ { /^---$/d; p; }')
+
+    if [[ -n $frontmatter ]]; then
+        eval "$frontmatter"
+        if [[ -n $layout ]]; then
+            if [[ -f "$SRC_DIR/layouts/$layout.html" ]]; then
+                LAYOUT=$(<"$SRC_DIR/layouts/$layout.html")
+            fi
+        fi
+    fi
+
+
     if [ "$extension" == "html" ]; then
         output_content="$content"
 
@@ -85,7 +98,7 @@ deploy() {
     # For example, you can use rsync, scp, or any other method to upload to a server
 }
 
-load_components
+# load_components
 
 # Clear the dist folder
 clear_dist
