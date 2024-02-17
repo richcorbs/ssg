@@ -85,8 +85,6 @@ deploy() {
     # For example, you can use rsync, scp, or any other method to upload to a server
 }
 
-load_components
-
 # Clear the dist folder
 clear_dist
 
