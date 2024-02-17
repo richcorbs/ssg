@@ -39,6 +39,7 @@ process_file() {
     if [[ -n $frontmatter ]]; then
         eval "$frontmatter"
         if [[ -n $layout ]]; then
+            content=$(echo "$content" | sed '/^---$/,/^---$/d')
             if [[ -f "$SRC_DIR/layouts/$layout.html" ]]; then
                 LAYOUT=$(<"$SRC_DIR/layouts/$layout.html")
             fi
