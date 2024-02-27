@@ -36,6 +36,7 @@ process_file() {
     # Check for frontmatter
     local frontmatter=$(echo "$content" | sed -n '/^---$/,/^---$/ { /^---$/d; p; }')
 
+    # If there is frontmatter check for a "layout" variable and for a layout file with that name.
     if [[ -n $frontmatter ]]; then
         eval "$frontmatter"
         if [[ -n $layout ]]; then
@@ -46,10 +47,10 @@ process_file() {
         fi
     fi
 
-
     if [ "$extension" == "html" ]; then
         output_content="$content"
 
+        # Handle components/partials here.
         while read -r file; do
             component_name=$(basename "$file" .html)
             TAG1="<${component_name} />"
