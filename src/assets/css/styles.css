@@ -1,0 +1,92 @@
+@import url(https://fonts.bunny.net/css?family=galindo:400|inter:100,400,700,900);
+
+code {
+  background-color: var(--pico-color-blue-50);
+  color: var(--pico-color-blue-800);
+  padding-inline: 16px;
+}
+
+footer {
+  font-family: 'Galindo', 'sans-serif';
+  margin-bottom: 96px;
+  margin-top: 64px;
+  text-align: center;
+}
+
+.grid-1 {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-rows: 50px 50px 50px 50px 50px 50px 50px 50px 50px;
+  grid-row-gap: 32px;
+}
+
+.grid-1 p {
+  margin-top: -10px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  grid-column-gap: 32px;
+  grid-row-gap: 32px;
+}
+
+.h-80 {
+  height: 80px;
+}
+
+html {
+  font-family: 'Inter', 'sans-serif';
+  --s: 300px; /* control the size*/
+  --c1: var(--pico-color-azure-50);
+  --c2: #ffffff;
+
+  --_g: #0000 90deg,var(--c1) 0;
+  background:
+    conic-gradient(from 90deg at 2px 2px,var(--_g)),
+    conic-gradient(from 90deg at 1px 1px,var(--_g)),
+    var(--c2);
+  background-size: var(--s) var(--s), calc(var(--s)/5) calc(var(--s)/5);
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'galindo', 'serif';
+}
+
+img.ftw {
+  margin-left: -10px;
+  margin-top: -20px;
+}
+
+img.zzz {
+  margin-left: 125px;
+  margin-bottom: -20px;
+}
+
+.inter {
+  font-family: 'Inter'
+}
+
+.mt-96 {
+  margin-top: 96px;
+}
+
+p {
+  font-size: 32px;
+}
+
+pre {
+  background-color: var(--pico-color-blue-50);
+  line-height: 1.5em;
+  margin-bottom: 48px;
+  margin-top: 32px;
+  padding-block: 32px;
+}
+
+.smaller {
+  font-size: 24px;
+}
+
+.text-center {
+  text-align: center;
+}
