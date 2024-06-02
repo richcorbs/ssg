@@ -1,33 +1,138 @@
 ---
-layout: layout.html
+layout: default.html
 ---
 <main class="container">
-  <h1>HOWDY</h1>
-  <section>
-    <div id="app"></div>
+  <h1 class="text-center">simply <span class="pico-color-blue-400">beautiful</span></h1>
+  <h1 class="text-center">beautifully <span class="pico-color-blue-400">simple</span></h1>
+  <h3 class="inter text-center">Few moving parts. Less to fiddle with.</h3>
+
+  <section class="mt-96">
+    <h3>what is this?</h3>
+
+    <p>It is a static site generator that is <b>intentionally simple</b>.</p>
+
+    <img width="52px" class="zzz" src="/assets/images/zzz.png" alt="Zzz" />
+    <p>
+      I was tired of overly complicated and unnecessarily powerful static site generators that do way more than I need so I made my own.
+      <img width="64px" class="ftw" src="/assets/images/ftw.png" alt="FTW" />
+    </p>
   </section>
 
-  <section>
-    <Test />
-  </section>
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 130 800 120"><path d="M0.8968609571456909,173.99102783203125C39.31240691741308,176.83108774820963,166.9656236767769,192.52615610758463,231.39013671875,191.03138732910156C295.8146497607231,189.5366185506185,327.95215861002606,164.87293752034506,387.4439392089844,165.0224151611328C446.9357198079427,165.17189280192056,526.9058380126953,191.3303451538086,588.3408203125,191.92825317382812C649.7758026123047,192.52616119384766,721.2257385253906,172.0478312174479,756.0538330078125,168.60986328125C790.8819274902344,165.1718953450521,790.4334615071615,170.85201517740884,797.3093872070312,171.30044555664062" fill="none" stroke-width="5" stroke="var(--pico-color-blue-400)" stroke-linecap="round"></path><defs><linearGradient id="SvgjsLinearGradient1000"><stop stop-color="hsl(37, 99%, 67%)" offset="0"></stop><stop stop-color="hsl(316, 73%, 52%)" offset="1"></stop></linearGradient></defs></svg>
 
   <section>
-    <Test></Test>
+    <h3>what does it include?</h3>
+
+    <div class="grid-1">
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>No external dependencies! One executable.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Scaffold a project from our template.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Support for multiple layouts.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Reusable HTML snippets (fragements, partials)</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Support for HTML and markdown.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Hot reload during development.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>PicoCSS.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Either VanJS or AlpineJS.</p>
+      <img width="70px" src="/assets/images/arrow.svg" class="pico-color-blue-400" />
+      <p>Deploy via SCP.</p>
+    </div>
   </section>
+
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 130 800 120"><path d="M0.8968609571456909,173.99102783203125C39.31240691741308,176.83108774820963,166.9656236767769,192.52615610758463,231.39013671875,191.03138732910156C295.8146497607231,189.5366185506185,327.95215861002606,164.87293752034506,387.4439392089844,165.0224151611328C446.9357198079427,165.17189280192056,526.9058380126953,191.3303451538086,588.3408203125,191.92825317382812C649.7758026123047,192.52616119384766,721.2257385253906,172.0478312174479,756.0538330078125,168.60986328125C790.8819274902344,165.1718953450521,790.4334615071615,170.85201517740884,797.3093872070312,171.30044555664062" fill="none" stroke-width="5" stroke="var(--pico-color-blue-400)" stroke-linecap="round"></path><defs><linearGradient id="SvgjsLinearGradient1000"><stop stop-color="hsl(37, 99%, 67%)" offset="0"></stop><stop stop-color="hsl(316, 73%, 52%)" offset="1"></stop></linearGradient></defs></svg>
+
+  <section>
+    <h3>how do I get started?</h3>
+
+    <div class="grid-2">
+      <img width="45px" class="flex-grow-0" src="/assets/images/checkmark.svg" />
+      <p>Download the sssg binary.</p>
+      <p class="smaller">This is the only dependency. You'll need the right version for your platform (Windows, Mac, Linux, etc).</p>
+    </div>
+    <div class="grid-2">
+      <img width="50px" class="flex-grow-0" src="/assets/images/checkmark.svg" />
+      <p>Run <code>sssg --init</code>.</p>
+      <p class="smaller">Scaffold your project in the current directory.</p>
+    </div>
+    <div class="grid-2">
+      <img width="50px" class="flex-grow-0" src="/assets/images/checkmark.svg" />
+      <p>Run <code>sssg --dev</code> to start the dev server.</p>
+      <p class="smaller">Start the dev server. The output will tell you which port the dev server is running on. Make changes and save and your page will automatically reload in the browser.</p>
+    </div>
+    <div class="grid-2">
+      <img width="50px" class="flex-grow-0" src="/assets/images/checkmark.svg" />
+      <p>Modify your content.</p>
+      <p class="smaller">Your content lives in the <code>./src</code> directory. Make and save changes and they will be reflected in the browser.</p>
+    </div>
+    <div class="grid-2">
+      <img width="50px" class="flex-grow-0" src="/assets/images/checkmark.svg" />
+      <p>Run <code>sssg --build</code> to build your site</p>
+      <p class="smaller">Your site will be built in the <code>./dist</code> directory and will be available there for you to deploy.</p>
+      <dist></dist></code></p>
+    </div>
+    <div class="grid-2">
+      <img width="50px" class="flex-grow-0" src="/assets/images/checkmark.svg" />
+      <p>Run <code>sssg --deploy <domain></domain></code>.</p>
+      <p class="smaller">If you deploy to ssss, running <code>sssg deploy</code> will take care of that for you.</p>
+      <dist></dist></code></p>
+    </div>
+  </section>
+
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 130 800 120"><path d="M0.8968609571456909,173.99102783203125C39.31240691741308,176.83108774820963,166.9656236767769,192.52615610758463,231.39013671875,191.03138732910156C295.8146497607231,189.5366185506185,327.95215861002606,164.87293752034506,387.4439392089844,165.0224151611328C446.9357198079427,165.17189280192056,526.9058380126953,191.3303451538086,588.3408203125,191.92825317382812C649.7758026123047,192.52616119384766,721.2257385253906,172.0478312174479,756.0538330078125,168.60986328125C790.8819274902344,165.1718953450521,790.4334615071615,170.85201517740884,797.3093872070312,171.30044555664062" fill="none" stroke-width="5" stroke="var(--pico-color-blue-400)" stroke-linecap="round"></path><defs><linearGradient id="SvgjsLinearGradient1000"><stop stop-color="hsl(37, 99%, 67%)" offset="0"></stop><stop stop-color="hsl(316, 73%, 52%)" offset="1"></stop></linearGradient></defs></svg>
+
+  <section>
+    <h3>Where does my content go?</h3>
+
+    <p>Your content goes in the <code>./src</code> directory.</p>
+
+    <ul>
+      <li class="smaller"><code>./dist</code> is where your site is built. This is where the dev server serves content from. You should deploy from here.</li>
+      <li class="smaller"><code>./src/assets</code> is copied straight across to the <code>./dist</code> directory during build.</li>
+      <li class="smaller"><code>./src/snippets</code> is where your reusable snippets of HTML go. Subdirectories are supported. Name each snippet uniquely within the project. If you name the file <code>MySnippet.html</code> then you can include that snippet in your HTML using <code>&lt;MySnippet&gt;&lt;/MySnippet&gt;</code>.</li>
+      <li class="smaller">
+        <p class="smaller"><code>./src/layouts</code> is where you can create your own layouts. Be sure to include <code>__CONTENT__</code> where you want your content placed in the layout.</p>
+        <p class="smaller">To use a custom layout on a given page, include frontmatter like this in the page where you want to use the custom layout:</p>
+<pre>
+  ---
+  layout: blog.html
+  ---
+  &lt;!-- The rest of your content goes here. -->
+</pre>
+      </li>
+      <li><code>./src/pages</code> is where your content pages live. It supports subdirectories.</li>
+    </ul>
+
+  <pre>
+    my-site
+    ├── dist
+    └── src
+        ├── assets
+        │   ├── css
+        │   │   ├── pico.colors.min.css
+        │   │   ├── pico.min.css
+        │   │   └── styles.css
+        │   ├── images
+        │   │   └── logo.png
+        │   └── js
+        │       └── app.js
+        ├── layouts
+        │   ├── default.html
+        │   └── blog.html
+        ├── pages
+        │   ├── about.html
+        │   ├── index.html
+        │   └── markdown.md
+        └── snippets
+            └── Test.html
+  </pre>
+
+  <footer>
+    <p>simple static site <span class="pico-color-blue-400">generator</span></p>
+  </footer>
 </main>
-
-<script>
-  const {div} = van.tags
-
-  const items = van.state([1, 2, 3, 4, 5])
-
-  const App = () => {
-    return div(
-      items.val.map(i => div(i))
-    )
-  }
-
-  const el = document.getElementById('app')
-
-  van.add(el, App())
-</script>

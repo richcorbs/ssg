@@ -48,12 +48,16 @@ const DEFAULT_LAYOUT = "default.html"
 // ├── snippets
 // │   └── Test.html
 // ├── layouts
+// │   ├── alpinejs.html
+// │   ├── blog.html
 // │   ├── default.html
-// │   └── layout.html
+// │   └── vanjs.html
 // └── pages
 //     ├── about.html
+//     ├── alpinejs.html
 //     ├── index.html
-//     └── markdown.md
+//     ├── markdown.md
+//     └── vanjs.html
 
 var clients = make(map[chan string]bool)
 var layouts []Layout

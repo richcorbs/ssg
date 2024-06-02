@@ -17,7 +17,7 @@ This is a simple static site generator built in golang. I built it for my needs 
 
 1. Download the sssg release for your platform.
 2. Put your HTML (.html) and markdown (.md) pages in the ./src/pages directory. Nested directories are ok. `.html` and `.md` files get wrapped in the layout so they don't have to been complete html docs.
-3. Customize the layout in `./src/layouts/layout.html`. This way you have one layout and all of your pages get wrapped in the same layout. Be sure to have `__CONTENT__` somewhere in your layout.
+3. Customize the layout in `./src/layouts/default.html`. This way you have one layout and all of your pages get wrapped in the same layout. Be sure to have `__CONTENT__` somewhere in your layout.
 4. In the layout file customize the link to your chosen CSS files. We've chosen Pico CSS to include in the init files.
 5. Put your static content (images, .js, .css, etc) in the ./src/assets directory and then link to the files like you normally would (/assets/js/whatever.js). They will be copied straight across to `./dist/assets` during the build process.
 6. The required directory structure is like this.
@@ -38,12 +38,16 @@ my-site
     ├── snippets
     │   └── Test.html
     ├── layouts
+    │   ├── alpinejs.html
+    │   ├── blog.html
     │   ├── default.html
-    │   └── layout.html
+    │   └── vanjs.html
     └── pages
         ├── about.html
+        ├── alpinejs.html
         ├── index.html
-        └── markdown.md
+        ├── markdown.md
+        └── vanjs.html
 ```
 
 7. You don't have to create `./dist`. The build process will create it for you.
