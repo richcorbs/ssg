@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -32,8 +33,8 @@ type FrontMatter struct {
 var PORT = "8080"
 
 const DIST = "dist"
-const SRC = "src"
-const DEFAULT_LAYOUT = "default.html"
+const SRC = "./src"
+const DEFAULT_LAYOUT = "./src/layouts/Default.html"
 
 // src
 // └── assets
@@ -75,11 +76,19 @@ func main() {
 	flag.StringVar(&jsFramework, "js", "none", "on init, which javascript framework do you want? none, vanjs (default), or alpinejs")
 	var doDeploy bool
 	flag.BoolVar(&doDeploy, "deploy", false, "deploy built site via scp")
+	var domain string
+	flag.StringVar(&domain, "domain", "", "optional, if you don't provide one we'll create one for you")
+	var env string
+	envOptions := []string{"production", "staging"}
+	flag.StringVar(&env, "env", envOptions[1], fmt.Sprintf("one of %v, defaults to %v", envOptions, envOptions[1]))
 	flag.Parse()
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Loading .env file failed: %s", err)
+		_, err := os.Create(".env")
+		if err != nil {
+			log.Fatalf("Could not load or create .env file: %s", err)
+		}
 	}
 	if doBuild {
 		err := build(false)
@@ -91,7 +100,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Deploy failed: %s", err)
 		}
-		deploy()
+		deploy(domain, env)
 	} else if doInit {
 		err := initializeNewProject(jsFramework)
 		if err != nil {

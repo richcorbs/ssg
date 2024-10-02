@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/russross/blackfriday/v2"
-	"gopkg.in/yaml.v2"
 )
 
 func broadcast(message string) {
@@ -160,6 +159,11 @@ func initializeSnippets() error {
 
 	snippets = []Snippet{}
 
+	if _, err := os.Stat(SRC + "/snippets"); os.IsNotExist(err) {
+		fmt.Println("Skipping snippets initialization. Directory does not exist.")
+		return nil
+	}
+
 	err := filepath.Walk(SRC+"/snippets", func(path string, info os.FileInfo, err error) error {
 		var snippet Snippet
 		if !info.IsDir() {
@@ -197,23 +201,25 @@ func initializeDependencies() error {
 		ext := filepath.Ext(file)
 
 		if ext == ".html" {
-			var layout string
 			content, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
 
-			frontMatter, _ := parseFrontMatter(string(content))
-			if len(frontMatter.Layout) > 0 {
-				layout = frontMatter.Layout
-			} else if layout == "" {
-				layout = DEFAULT_LAYOUT
+			foundLayout := false
+
+			for _, layout := range layouts {
+				if strings.HasPrefix(string(content), "<"+layout.Name+"Layout>") && strings.HasSuffix(string(content), "</"+layout.Name+"Layout>") {
+					foundLayout = true
+					if !sliceContains(path, dependencies[layout.Path]) {
+						dependencies[layout.Path] = append(dependencies[layout.Path], path)
+					}
+				}
 			}
 
-			if layout != "" {
-				layoutPath := SRC + "/layouts/" + layout
-				if !sliceContains(path, dependencies[layoutPath]) {
-					dependencies[layoutPath] = append(dependencies[layoutPath], path)
+			if foundLayout == false {
+				if !sliceContains(path, dependencies[DEFAULT_LAYOUT]) {
+					dependencies[DEFAULT_LAYOUT] = append(dependencies[DEFAULT_LAYOUT], path)
 				}
 			}
 
@@ -239,6 +245,9 @@ func initializeLayouts() error {
 
 	layouts = []Layout{}
 
+	if _, err := os.Stat(SRC + "/layouts"); os.IsNotExist(err) {
+		return fmt.Errorf("%v/layouts not found", SRC)
+	}
 	err := filepath.Walk(SRC+"/layouts", func(path string, info os.FileInfo, err error) error {
 		var layout Layout
 		if !info.IsDir() {
@@ -255,19 +264,6 @@ func initializeLayouts() error {
 	}
 
 	return nil
-}
-
-func parseFrontMatter(content string) (FrontMatter, string) {
-	var frontMatter FrontMatter
-	parts := strings.SplitN(content, "---", 3)
-
-	if len(parts) != 3 {
-		return frontMatter, content
-	}
-	if err := yaml.Unmarshal([]byte(parts[1]), &frontMatter); err != nil {
-		return frontMatter, parts[2]
-	}
-	return frontMatter, parts[2]
 }
 
 func processSnippets(data []byte) []byte {
@@ -289,29 +285,36 @@ func processSnippets(data []byte) []byte {
 
 func wrapHtmlInLayout(data []byte) []byte {
 	fmt.Println("Wrapping in layout...")
-	defaultLayoutPath := SRC + "/layouts/" + DEFAULT_LAYOUT
-	frontMatter, body := parseFrontMatter(string(data))
+	defaultLayoutPath := SRC + "/layouts/Default.html"
 
 	var wrappedData string
+	var unwrappedData string
 	var rawLayout []byte
 	var layout string
 	var err error
+	var openTag string
+	var closeTag string
 
-	if len(frontMatter.Layout) > 0 {
-		layoutPath := SRC + "/layouts/" + frontMatter.Layout
-		_, err := os.Stat(layoutPath)
-		if err == nil {
-			rawLayout, err = os.ReadFile(layoutPath)
-			if err != nil {
-				fmt.Println("Error:", err)
+	for _, layout := range layouts {
+		openTag = "<" + layout.Name + "Layout>"
+		closeTag = "</" + layout.Name + "Layout>"
+		if strings.HasPrefix(string(data), openTag) && strings.Contains(string(data), closeTag) {
+			layoutPath := layout.Path
+			_, err := os.Stat(layoutPath)
+			if err == nil {
+				rawLayout, err = os.ReadFile(layoutPath)
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
 			}
-		} else {
-			rawLayout, err = os.ReadFile(defaultLayoutPath)
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
+			unwrappedData = replaceAWithB(string(data), openTag, "")
+			unwrappedData = replaceAWithB(unwrappedData, closeTag, "")
 		}
-	} else {
+	}
+
+	if len(rawLayout) == 0 {
+		unwrappedData = replaceAWithB(string(data), "<DefaultLayout>", "")
+		unwrappedData = replaceAWithB(unwrappedData, "</DefaultLayout>", "")
 		rawLayout, err = os.ReadFile(defaultLayoutPath)
 		if err != nil {
 			fmt.Println("Error:", err)
@@ -319,7 +322,7 @@ func wrapHtmlInLayout(data []byte) []byte {
 	}
 
 	layout = string(rawLayout)
-	wrappedData = replaceAWithB(layout, "__CONTENT__", string(body))
+	wrappedData = replaceAWithB(layout, "__CONTENT__", unwrappedData)
 
 	return []byte(wrappedData)
 }

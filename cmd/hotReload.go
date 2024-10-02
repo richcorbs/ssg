@@ -30,15 +30,17 @@ func fileWatcher() {
 	for {
 		select {
 		case event, ok := <-watcher.Events:
-			startTime := time.Now()
 			if !ok {
 				return
 			}
 
+			startTime := time.Now()
+			interestingEvent := false
+
 			var wg sync.WaitGroup
 			defer wg.Done()
 
-			// fmt.Println("Event:", event)
+			// fmt.Println("Event:", event, event.Op)
 
 			var fileInfo os.FileInfo
 			var err error
@@ -46,24 +48,11 @@ func fileWatcher() {
 				fileInfo, err = os.Stat(event.Name)
 			}
 
-			if err != nil {
-				fmt.Println("Error:", err)
-				return
-			} else if event.Op&fsnotify.Create == fsnotify.Create && fileInfo.IsDir() {
-				// CREATE DIRECTORY PATH
-				watchPath(watcher, event.Name)
-
-				fmt.Println("Creating directory structure:", event.Name)
-				err = filepath.Walk(event.Name, buildDirs)
-				if err != nil {
-					fmt.Println("Error building directories:", err)
-				}
-			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/assets") {
-				// CREATE ASSET
-				wg.Add(1)
-				go buildPage(event.Name, &wg)
-			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/layouts") {
-				// CREATE LAYOUT
+			if strings.HasSuffix(event.Name, ".DS_Store") {
+				// IGNORE
+			} else if os.IsNotExist(err) {
+				// REBUILD ALL?
+				interestingEvent = true
 				err = initializeDependencies()
 				if err != nil {
 					log.Fatal("Error initializing dependencies:", err)
@@ -73,8 +62,36 @@ func fileWatcher() {
 					wg.Add(1)
 					go buildPage(path, &wg)
 				}
-			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/pages") {
+			} else if event.Op&fsnotify.Create == fsnotify.Create && fileInfo.IsDir() {
+				// CREATE DIRECTORY PATH
+				interestingEvent = true
+				watchPath(watcher, event.Name)
+
+				fmt.Println("Creating directory structure:", event.Name)
+				err = filepath.Walk(event.Name, buildDirs)
+				if err != nil {
+					fmt.Println("Error building directories:", err)
+				}
+			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/assets") && !strings.HasSuffix(event.Name, ".DS_Store") {
+				// CREATE ASSET
+				interestingEvent = true
+				wg.Add(1)
+				go buildPage(event.Name, &wg)
+			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/layouts") && !strings.HasSuffix(event.Name, ".DS_Store") {
+				// CREATE LAYOUT
+				interestingEvent = true
+				err = initializeDependencies()
+				if err != nil {
+					log.Fatal("Error initializing dependencies:", err)
+				}
+
+				for _, path := range dependencies[event.Name] {
+					wg.Add(1)
+					go buildPage(path, &wg)
+				}
+			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/pages") && !strings.HasSuffix(event.Name, ".DS_Store") {
 				// CREATE PAGE
+				interestingEvent = true
 				err = initializeDependencies()
 				if err != nil {
 					log.Fatal("Error initializing dependencies:", err)
@@ -82,8 +99,9 @@ func fileWatcher() {
 
 				wg.Add(1)
 				go buildPage(event.Name, &wg)
-			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/snippets") {
+			} else if event.Op&fsnotify.Create == fsnotify.Create && strings.HasPrefix(event.Name, "src/snippets") && !strings.HasSuffix(event.Name, ".DS_Store") {
 				// CREATE SNIPPET
+				interestingEvent = true
 				err = initializeSnippets()
 				if err != nil {
 					log.Fatal("Error initializing dependencies:", err)
@@ -99,7 +117,19 @@ func fileWatcher() {
 					go buildPage(path, &wg)
 				}
 			} else if event.Op&fsnotify.Remove == fsnotify.Remove && strings.HasPrefix(event.Name, "src/assets") {
-				// DELETE ASSET
+				interestingEvent = true
+				distPath := event.Name
+				distPath = replaceAWithB(distPath, "src/", "dist/")
+				fmt.Println("Deleting from dist:", distPath)
+				_, err := os.Stat(distPath)
+				if err == nil {
+					err = os.RemoveAll(distPath)
+					if err != nil {
+						fmt.Println("Error deleting:", distPath, err)
+					}
+				}
+			} else if event.Op&fsnotify.Rename == fsnotify.Rename && strings.HasPrefix(event.Name, "src/assets") {
+				interestingEvent = true
 				distPath := event.Name
 				distPath = replaceAWithB(distPath, "src/", "dist/")
 				fmt.Println("Deleting from dist:", distPath)
@@ -112,6 +142,7 @@ func fileWatcher() {
 				}
 			} else if event.Op&fsnotify.Remove == fsnotify.Remove && strings.HasPrefix(event.Name, "src/layouts") {
 				// DELETE LAYOUT
+				interestingEvent = true
 				err = initializeLayouts()
 				if err != nil {
 					log.Fatal("Error initializing layouts:", err)
@@ -128,6 +159,7 @@ func fileWatcher() {
 				}
 			} else if event.Op&fsnotify.Remove == fsnotify.Remove && strings.HasPrefix(event.Name, "src/pages") {
 				// DELETE PAGE
+				interestingEvent = true
 				err = initializeDependencies()
 				if err != nil {
 					log.Fatal("Error initializing dependencies:", err)
@@ -147,6 +179,7 @@ func fileWatcher() {
 				}
 			} else if event.Op&fsnotify.Remove == fsnotify.Remove && strings.HasPrefix(event.Name, "src/snippets") {
 				// DELETE SNIPPET
+				interestingEvent = true
 				err = initializeSnippets()
 				if err != nil {
 					log.Fatal("Error initializing snippets:", err)
@@ -163,10 +196,12 @@ func fileWatcher() {
 				}
 			} else if event.Op&fsnotify.Write == fsnotify.Write && strings.HasPrefix(event.Name, "src/assets") {
 				// UPDATE ASSET
+				interestingEvent = true
 				wg.Add(1)
 				go buildPage(event.Name, &wg)
 			} else if event.Op&fsnotify.Write == fsnotify.Write && strings.HasPrefix(event.Name, "src/layouts") {
 				// UPDATE LAYOUT
+				interestingEvent = true
 				err = initializeDependencies()
 				if err != nil {
 					log.Fatal("Error initializing dependencies:", err)
@@ -178,6 +213,7 @@ func fileWatcher() {
 				}
 			} else if event.Op&fsnotify.Write == fsnotify.Write && strings.HasPrefix(event.Name, "src/pages") {
 				// UPDATE PAGE
+				interestingEvent = true
 				err = initializeDependencies()
 				if err != nil {
 					log.Fatal("Error initializing dependencies:", err)
@@ -193,6 +229,7 @@ func fileWatcher() {
 				}
 			} else if event.Op&fsnotify.Write == fsnotify.Write && strings.HasPrefix(event.Name, "src/snippets") {
 				// UPDATE SNIPPET
+				interestingEvent = true
 				err := initializeSnippets()
 				if err != nil {
 					log.Fatal("Error initializing snippets:", err)
@@ -210,7 +247,9 @@ func fileWatcher() {
 			}
 
 			wg.Wait()
-			fmt.Printf("Re-build complete: %s\n", time.Since(startTime))
+			if interestingEvent {
+				fmt.Printf("Re-build complete: %s\n", time.Since(startTime))
+			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return

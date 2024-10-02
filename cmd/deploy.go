@@ -1,170 +1,221 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net"
 	"os"
-	"os/user"
-	"path/filepath"
-
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
+	"os/exec"
+	"strings"
 )
 
-func deploy() {
-	fmt.Println("Deploying...")
+// .env
+// DEPLOY_TOKEN
+// DEPLOY_PRODUCTION_DOMAIN
+// DEPLOY_STAGING_DOMAIN
+// set up variables
+// if !DEPLOY_TOKEN
+//   get token
+// end
+//
+// if env == "staging" && domain
+//   throw an error
+// else if env == "production" && DEPLOY_PRODUCTION_DOMAIN && DOMAIN
+//   throw an error
+// else if env == "staging" && DEPLOY_STAGING_DOMAIN
+//   deploy to staging
+// else if env == "production" && DEPLOY_PRODUCTION_DOMAIN
+//   deploy to production
+// else if env == "production" && domain
+//   write domain to DEPLOY_PRODUCTION_DOMAIN
+//   deploy to production
+// else if env == "staging" && !DEPLOY_STAGING_DOMAIN
+//   get random domain
+//   write random domain to DEPLOY_STAGING_DOMAIN
+//   deploy to staging
+// end
 
-	sshAuthSock := os.Getenv("SSH_AUTH_SOCK")
-	if sshAuthSock == "" {
-		log.Fatalf("SSH_AUTH_SOCK environment variable is not set")
+func deploy(domain string, env string) {
+	var err error
+	var deployDomain string
+	if env == "production" {
+		deployDomain = os.Getenv("DEPLOY_PRODUCTION_DOMAIN")
+		if deployDomain != "" && domain != "" {
+			// TODO: What really needs to happen here?
+			log.Fatalf("You've already deployed this site to another domain: %v.", deployDomain)
+		} else if deployDomain == "" && domain == "" {
+			log.Fatal("You need to provide a domain or subdomain of sssg.live.")
+		} else if deployDomain == "" && domain != "" {
+			deployDomain = domain
+		}
+	} else if env == "staging" {
+		deployDomain = os.Getenv("DEPLOY_STAGING_DOMAIN")
+		if deployDomain == "" {
+			deployDomain, err = getRandomDomain()
+			if err != nil {
+				fmt.Println("Error getting staging domain:", err)
+				os.Exit(1)
+			}
+			err = os.Setenv("DEPLOY_STAGING_DOMAIN", deployDomain)
+			if err != nil {
+				fmt.Println("Error setting .env variable: DEPLOY_STAGING_DOMAIN", err)
+				os.Exit(1)
+			}
+			writeEnv()
+		}
 	}
 
-	// Get the current user
-	currentUser, err := user.Current()
+	fmt.Println("Deploying", env)
+	localDir := "./dist/"
+
+	token := os.Getenv("DEPLOY_TOKEN")
+	if token == "" {
+		token, err = register()
+		if err != nil {
+			fmt.Println("Error getting token:", err)
+			os.Exit(1)
+		}
+		err = os.Setenv("DEPLOY_TOKEN", token)
+		if err != nil {
+			fmt.Println("Error setting .env variable DEPLOY_TOKEN:", err)
+			os.Exit(1)
+		}
+		writeEnv()
+	}
+
+	err = registerDomain(deployDomain, token)
 	if err != nil {
-		log.Fatalf("Failed to get current user: %v", err)
+		fmt.Println("Error registering domain:", err)
+		os.Exit(1)
 	}
 
-	// Connect to the SSH agent
-	conn, err := net.Dial("unix", sshAuthSock)
+	// Create tar file
+	tarFile := fmt.Sprintf("/tmp/%s.tar.gz", deployDomain)
+	cmd := exec.Command("tar", "-czf", tarFile, "-C", localDir, ".")
+	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("failed to connect to SSH agent: %v", err)
+		fmt.Println("Error creating content file:", tarFile, err)
+		os.Exit(1)
 	}
 
-	// Authenticate with the agent
-	sshAgent := agent.NewClient(conn)
-	if sshAgent == nil {
-		log.Fatalf("failed to authenticate with SSH agent")
-	}
+	// Send tar file to server
+	// TODO: update the URL to use the production URL
+	cmd = exec.Command("curl", "-F", "token="+token, "-F", "domain="+deployDomain, "-F", "file=@"+tarFile, "https://localhost/domain-upload")
+	fmt.Println(cmd)
+	err = cmd.Run()
 
-	keys, err := sshAgent.List()
 	if err != nil {
-		log.Fatalf("Failed to list keys from SSH agent: %v", err)
-	}
-	fmt.Println(len(keys))
-
-	// Create an SSH client configuration
-	config := &ssh.ClientConfig{
-		User: currentUser.Username,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeysCallback(sshAgent.Signers),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // WARNING: Insecure, use proper host key verification in production
+		fmt.Printf("%s", err)
 	}
 
-	// Connect to the SSH server
-	host := os.Getenv("DEPLOY_HOST")
-	port := os.Getenv("DEPLOY_PORT")
-	dir := os.Getenv("DEPLOY_DIR")
-	sshClient, err := ssh.Dial("tcp", host+":"+port, config)
-	if err != nil {
-		log.Fatalf("failed to connect to SSH server: %v", err)
-	}
-	defer sshClient.Close()
-
-	sftpClient, err := sftp.NewClient(sshClient)
-	if err != nil {
-		log.Fatal("Failed to create SFTP client: ", err)
-	}
-	defer sftpClient.Close()
-
-	localDir := "dist"
-	remoteDir := dir
-
-	err = deployDir(localDir, remoteDir, sftpClient)
-	if err != nil {
-		log.Fatal("Deploy failed:", err)
-	}
+	fmt.Println("Deployed:", deployDomain)
+	// TODO: delete tarFile after deploy
 }
 
-func deployDir(localDir, remoteDir string, sftpClient *sftp.Client) error {
-	_, err := sftpClient.Stat(remoteDir)
-	if err == nil {
-		// Remote directory exists, remove all files and subdirectories
-		if err := deployRemoveAllFilesAndDirs(remoteDir, sftpClient); err != nil {
-			return fmt.Errorf("failed to empty remote directory %s: %v", remoteDir, err)
-		}
-	} else if !os.IsNotExist(err) {
-		// An error occurred while checking for the existence of the remote directory
-		return fmt.Errorf("failed to check remote directory %s: %v", remoteDir, err)
-	}
-	// Open local directory
-	localFiles, err := os.ReadDir(localDir)
+func getRandomDomain() (domain string, error error) {
+	fmt.Println("Getting random domain")
+	cmd := exec.Command("curl", "https://localhost/domain-random")
+	out, err := cmd.Output()
 	if err != nil {
-		log.Fatalf("failed to read local directory: %v, %v", localDir, err)
+		fmt.Printf("%s", err)
+		return "", err
+	}
+	var parsedJson struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+		Domain  string `json:"domain"`
 	}
 
-	for _, file := range localFiles {
-		localPath := filepath.Join(localDir, file.Name())
-		remotePath := filepath.Join(remoteDir, file.Name())
+	err = json.Unmarshal(out, &parsedJson)
+	if err != nil {
+		fmt.Printf("%s", err)
+		return "", err
+	}
+	// fmt.Println(parsedJson.Domain)
+	domain = parsedJson.Domain
+	return domain, nil
+}
 
-		if file.IsDir() {
-			// Recurse directory
-			err := deployDir(localPath, remotePath, sftpClient)
-			if err != nil {
-				return err
-			}
-		} else {
-			// Ensure parent directory exists on the remote server
-			parentDir := filepath.Dir(remotePath)
-			if err := sftpClient.MkdirAll(parentDir); err != nil {
-				return fmt.Errorf("failed to create remote directory %s: %v", parentDir, err)
-			}
+func register() (token string, error error) {
+	fmt.Println("Registering")
+	cmd := exec.Command("curl", "-X", "POST", "https://localhost/register")
+	out, err := cmd.Output()
+	if err != nil {
+		log.Println(string(out))
+		fmt.Printf("%s\n", err)
+		return "", err
+	}
+	var parsedJson struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+		Token   string `json:"token"`
+	}
 
-			// Transfer file
-			srcFile, err := os.Open(localPath)
-			if err != nil {
-				return fmt.Errorf("failed to open local file %s: %v", file.Name(), err)
-			}
-			defer srcFile.Close()
+	err = json.Unmarshal(out, &parsedJson)
+	if err != nil {
+		fmt.Printf("%s", err)
+		return "", err
+	}
+	fmt.Println(parsedJson.Token)
+	token = parsedJson.Token
+	return token, nil
+}
 
-			dstFile, err := sftpClient.Create(remotePath)
-			if err != nil {
-				return fmt.Errorf("failed to create remote file %s: %v", file.Name(), err)
-			}
-			defer dstFile.Close()
+func registerDomain(domain string, token string) (error error) {
+	fmt.Println("Registering domain:", domain)
+	cmd := exec.Command("curl", "-F", "token="+token, "-F", "domain="+domain, "https://localhost/domain-register")
+	out, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("%s", err)
+		return err
+	}
+	var parsedJson struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+		Domains string `json:"domains"`
+	}
 
-			_, err = io.Copy(dstFile, srcFile)
-			if err != nil {
-				return fmt.Errorf("failed to copy file %s: %v", file.Name(), err)
-			}
-
-			fmt.Printf("File %s deployed successfully\n", remoteDir+"/"+file.Name())
-		}
+	err = json.Unmarshal(out, &parsedJson)
+	if err != nil {
+		fmt.Printf("%s", err)
+		return err
 	}
 	return nil
 }
 
-func deployRemoveAllFilesAndDirs(dir string, sftpClient *sftp.Client) error {
-	// Open directory
-	files, err := sftpClient.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-
-	// Remove each file and subdirectory
-	for _, file := range files {
-		filePath := filepath.Join(dir, file.Name())
-		if file.IsDir() {
-			// Recursively remove subdirectory
-			if err := deployRemoveAllFilesAndDirs(filePath, sftpClient); err != nil {
-				return err
-			}
-		} else {
-			// Remove file
-			if err := sftpClient.Remove(filePath); err != nil {
-				return err
-			}
+func writeEnv() {
+	var err error
+	envContents := ""
+	for _, e := range os.Environ() {
+		if strings.Contains(e, "DEPLOY_") {
+			envContents += e + "\n"
 		}
 	}
-
-	// Remove the directory itself
-	if err := sftpClient.RemoveDirectory(dir); err != nil {
-		return err
+	err = os.WriteFile(".env", []byte(envContents), 0644)
+	if err != nil {
+		fmt.Println("Error writing environment variables to .env file:", err)
+		os.Exit(1)
 	}
-
-	return nil
 }
+
+// func deployOriginal() {
+// 	fmt.Println("Deploying...")
+
+// 	dir := os.Getenv("DEPLOY_DEST_DIR")
+// 	host := os.Getenv("DEPLOY_HOST")
+// 	port := os.Getenv("DEPLOY_PORT")
+// 	user := os.Getenv("DEPLOY_USER")
+
+// 	localDir := "./dist/"
+// 	remoteDir := dir
+
+// 	out, err := exec.Command("rsync", "-av", "--delete", "-e ssh -p "+port, localDir, user+"@"+host+":"+remoteDir).Output()
+
+// 	if err != nil {
+// 		fmt.Printf("%s", err)
+// 	}
+
+// 	fmt.Println("Rsync Successfully Executed")
+// 	output := string(out[:])
+// 	fmt.Println(output)
+// }

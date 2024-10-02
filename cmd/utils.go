@@ -1,6 +1,8 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 func sliceContains(str string, arr []string) bool {
 	for _, v := range arr {

@@ -1,28 +1,26 @@
----
-layout: vanjs.html
----
-<main class="container">
-  <h1>Counter</h1>
+<VanjsLayout>
+  <main class="container">
+    <h1>Counter</h1>
 
-  <section id="app"></section>
-</main>
+    <section id="app"></section>
+  </main>
 
-<script>
-  const {button, div, p} = van.tags
+  <script>
+    const { button, div, p } = van.tags;
 
+    const App = () => {
+      const counter = van.state(0);
+      return div(
+        { style: "display: flex; gap: 32px;" },
+        button({ onclick: () => --counter.val }, "-"),
+        p(
+          { style: "text-align: center; width: 50px; margin-top: 20px;" },
+          () => counter.val,
+        ),
+        button({ onclick: () => ++counter.val }, "+"),
+      );
+    };
 
-  const App = () => {
-    const counter = van.state(0)
-    return div(
-      { style: "display: flex; gap: 32px;" },
-      button({onclick: () => --counter.val}, "-"),
-      p(
-        { style: "text-align: center; width: 50px; margin-top: 20px;" },
-        () => counter.val
-      ),
-      button({onclick: () => ++counter.val}, "+"),
-    )
-  }
-
-  van.add(app, App())
-</script>
+    van.add(app, App());
+  </script>
+</VanjsLayout>
