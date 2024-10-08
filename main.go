@@ -34,7 +34,7 @@ var PORT = "8080"
 
 const DIST = "dist"
 const SRC = "./src"
-const DEFAULT_LAYOUT = "./src/layouts/Default.html"
+const DEFAULT_LAYOUT = "src/layouts/Default.html"
 
 // src
 // └── assets

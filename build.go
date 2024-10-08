@@ -200,7 +200,7 @@ func initializeDependencies() error {
 		file := filepath.Base(path)
 		ext := filepath.Ext(file)
 
-		if ext == ".html" {
+		if ext == ".html" || ext == ".md" {
 			content, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -209,7 +209,7 @@ func initializeDependencies() error {
 			foundLayout := false
 
 			for _, layout := range layouts {
-				if strings.HasPrefix(string(content), "<"+layout.Name+"Layout>") && strings.HasSuffix(string(content), "</"+layout.Name+"Layout>") {
+				if strings.HasPrefix(string(content), "<"+layout.Name+"Layout>") && (strings.HasSuffix(string(content), "</"+layout.Name+"Layout>") || strings.HasSuffix(string(content), "</"+layout.Name+"Layout>\n")) {
 					foundLayout = true
 					if !sliceContains(path, dependencies[layout.Path]) {
 						dependencies[layout.Path] = append(dependencies[layout.Path], path)
